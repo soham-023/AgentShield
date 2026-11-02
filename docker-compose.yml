@@ -1,0 +1,29 @@
+# ============================================================
+#  AgentShield — Docker Compose
+# ============================================================
+#  Spins up PostgreSQL for local development.
+#  Usage:  docker compose up -d
+#  Stop:   docker compose down
+#  Reset:  docker compose down -v  (deletes all data)
+# ============================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: agentshield-postgres
+    environment:
+      POSTGRES_DB: agentshield
+      POSTGRES_USER: agentshield
+      POSTGRES_PASSWORD: agentshield_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentshield"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

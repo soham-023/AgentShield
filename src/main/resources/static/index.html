@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentShield — AI Agent Permission & Action Control</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .tab-btn.active { border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-shield-halved text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        AgentShield <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">v1.0</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">AI Agent Permission & Approval Control Platform</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/30">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-2"></span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 -ml-4"></span>
+                    Backend Online
+                </div>
+                <a href="/swagger-ui.html" target="_blank" class="text-xs text-slate-300 hover:text-white bg-slate-700/60 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-600 flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-book-open"></i> Swagger API Docs
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-slate-800 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 flex space-x-8 text-sm">
+            <button onclick="switchTab('agents')" id="tab-agents" class="tab-btn active py-3 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+                <i class="fa-solid fa-robot"></i> 1. AI Agents
+            </button>
+            <button onclick="switchTab('policies')" id="tab-policies" class="tab-btn py-3 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+                <i class="fa-solid fa-scale-balanced"></i> 2. Policies
+            </button>
+            <button onclick="switchTab('playground')" id="tab-playground" class="tab-btn py-3 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+                <i class="fa-solid fa-bolt"></i> 3. Agent Playground
+            </button>
+            <button onclick="switchTab('approvals')" id="tab-approvals" class="tab-btn py-3 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+                <i class="fa-solid fa-user-check"></i> 4. Human Approvals
+                <span id="pending-badge" class="hidden text-xs bg-amber-500 text-slate-900 font-bold px-2 py-0.5 rounded-full">0</span>
+            </button>
+            <button onclick="switchTab('audit')" id="tab-audit" class="tab-btn py-3 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left"></i> 5. Audit Log
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert / Toast Container -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2 max-w-md"></div>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full">
+
+        <!-- ================= TAB 1: AGENTS ================= -->
+        <section id="content-agents" class="tab-content block">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Registered AI Agents</h2>
+                    <p class="text-sm text-slate-400">Register new agent identities and manage their API credentials.</p>
+                </div>
+                <button onclick="openModal('create-agent-modal')" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg text-sm shadow-lg shadow-blue-600/30 flex items-center gap-2 transition">
+                    <i class="fa-solid fa-plus"></i> Register New Agent
+                </button>
+            </div>
+
+            <!-- Newly Created Key Banner (hidden by default) -->
+            <div id="new-key-alert" class="hidden mb-6 bg-gradient-to-r from-emerald-950 to-slate-800 border border-emerald-500/40 rounded-xl p-4 shadow-xl">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-3">
+                        <i class="fa-solid fa-key text-emerald-400 text-xl mt-1"></i>
+                        <div>
+                            <h3 class="text-emerald-400 font-bold text-sm">Agent API Key Generated Successfully!</h3>
+                            <p class="text-xs text-slate-300 mt-1">
+                                Store this key safely now. AgentShield stores only a <strong>SHA-256 hash</strong> of this key; you will never be able to see it again!
+                            </p>
+                            <div class="mt-3 flex items-center gap-2">
+                                <code id="raw-key-display" class="bg-slate-950 text-emerald-300 font-mono text-xs px-3 py-2 rounded border border-slate-700 select-all max-w-xl truncate"></code>
+                                <button onclick="copyToClipboard(document.getElementById('raw-key-display').innerText)" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-2 rounded text-slate-200 transition">
+                                    <i class="fa-solid fa-copy mr-1"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('new-key-alert').classList.add('hidden')" class="text-slate-400 hover:text-slate-200 text-sm">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agents Grid/Table -->
+            <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="bg-slate-900/60 text-xs uppercase text-slate-400 border-b border-slate-700">
+                            <tr>
+                                <th class="px-6 py-4">Agent Name</th>
+                                <th class="px-6 py-4">Agent ID</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4">Owner</th>
+                                <th class="px-6 py-4">Created Date</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agents-table-body" class="divide-y divide-slate-700">
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                                    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading agents...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: POLICIES ================= -->
+        <section id="content-policies" class="tab-content hidden">
+            <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Agent Permission Policies</h2>
+                    <p class="text-sm text-slate-400">Configure what actions an agent is allowed, denied, or requires your approval to execute.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <label class="text-xs text-slate-400 font-medium">Select Agent:</label>
+                    <select id="policy-agent-select" onchange="loadAgentPolicies(this.value)" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Choose Agent --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Policy Rules Grid -->
+            <div id="policy-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="col-span-full py-12 text-center text-slate-500 bg-slate-800/50 rounded-xl border border-dashed border-slate-700">
+                    <i class="fa-solid fa-hand-pointer text-3xl mb-2"></i>
+                    <p>Select an agent above to view and configure its permission rules.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: PLAYGROUND ================= -->
+        <section id="content-playground" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Request Form -->
+                <div class="lg:col-span-5 bg-slate-800 border border-slate-700 rounded-xl p-6 shadow">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                            <i class="fa-solid fa-terminal"></i>
+                        </div>
+                        <h2 class="text-lg font-bold text-white">Simulate AI Agent Request</h2>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-6">
+                        Pretend you are an AI Agent. Submit an action request with your API Key to see how AgentShield evaluates policies.
+                    </p>
+
+                    <form id="action-request-form" onsubmit="submitAgentAction(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Agent API Key (Raw Key):</label>
+                            <input type="text" id="action-api-key" placeholder="as_live_..." required class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-xs font-mono text-emerald-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <p class="text-[11px] text-slate-500 mt-1">Hint: Copy from the newly generated agent key in Tab 1.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Action Type:</label>
+                            <select id="action-type-select" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="SEND_EMAIL">SEND_EMAIL</option>
+                                <option value="READ_EMAIL">READ_EMAIL</option>
+                                <option value="DELETE_FILE">DELETE_FILE</option>
+                                <option value="READ_FILE">READ_FILE</option>
+                                <option value="UPDATE_DATABASE">UPDATE_DATABASE</option>
+                                <option value="EXECUTE_REPORT">EXECUTE_REPORT</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Action Description:</label>
+                            <input type="text" id="action-description" value="Send assignment draft to professor" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Parameters (JSON):</label>
+                            <textarea id="action-parameters" rows="3" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 font-mono text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">{"recipient": "prof@college.edu", "subject": "Assignment #2"}</textarea>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-lg text-sm shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-paper-plane"></i> Send Request as AI Agent
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Live Evaluation Output -->
+                <div class="lg:col-span-7 bg-slate-800 border border-slate-700 rounded-xl p-6 shadow flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                                <i class="fa-solid fa-microchip"></i>
+                            </div>
+                            <h2 class="text-lg font-bold text-white">AgentShield Evaluation Result</h2>
+                        </div>
+                        <span id="playground-status-badge" class="text-xs px-2.5 py-1 rounded-full bg-slate-700 text-slate-400 font-semibold uppercase">Idle</span>
+                    </div>
+
+                    <div id="playground-output" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-4 font-mono text-xs overflow-auto max-h-96 text-slate-400 flex items-center justify-center">
+                        <p class="text-slate-600 text-center">
+                            Submit an action request on the left to see AgentShield's permission check and decision pipeline.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 4: APPROVALS ================= -->
+        <section id="content-approvals" class="tab-content hidden">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Human Approval Queue</h2>
+                    <p class="text-sm text-slate-400">Review, approve, or reject high-risk actions requested by AI agents.</p>
+                </div>
+                <button onclick="loadPendingApprovals()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg transition">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Refresh Queue
+                </button>
+            </div>
+
+            <div id="approvals-container" class="space-y-4">
+                <div class="py-12 text-center text-slate-500 bg-slate-800 rounded-xl border border-slate-700">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+                    <p>Loading pending approvals...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 5: AUDIT LOG ================= -->
+        <section id="content-audit" class="tab-content hidden">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Security Audit Log</h2>
+                    <p class="text-sm text-slate-400">Append-only, immutable history of all platform events and decisions.</p>
+                </div>
+                <button onclick="loadAuditLogs()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg transition">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Refresh Logs
+                </button>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="bg-slate-900/60 text-xs uppercase text-slate-400 border-b border-slate-700">
+                            <tr>
+                                <th class="px-6 py-4">Event Type</th>
+                                <th class="px-6 py-4">Result</th>
+                                <th class="px-6 py-4">Agent / Actor ID</th>
+                                <th class="px-6 py-4">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-table-body" class="divide-y divide-slate-700 text-xs">
+                            <tr>
+                                <td colspan="4" class="px-6 py-8 text-center text-slate-500">
+                                    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading audit trail...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: Register Agent -->
+    <div id="create-agent-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-robot text-blue-400"></i> Register New AI Agent
+                </h3>
+                <button onclick="closeModal('create-agent-modal')" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="handleCreateAgent(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Agent Name *</label>
+                    <input type="text" id="modal-agent-name" placeholder="e.g. FinanceBot, EmailAssistant" required minlength="2" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Description</label>
+                    <textarea id="modal-agent-desc" rows="3" placeholder="What does this agent do?" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeModal('create-agent-modal')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg text-sm shadow">Register Agent</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Frontend Script -->
+    <script>
+        const API_BASE = '/api/v1';
+        let currentAgents = [];
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+
+            if (tabId === 'agents') loadAgents();
+            if (tabId === 'policies') loadAgentDropdown();
+            if (tabId === 'approvals') loadPendingApprovals();
+            if (tabId === 'audit') loadAuditLogs();
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-rose-600' : 'bg-blue-600');
+            toast.className = `${bg} text-white text-xs px-4 py-3 rounded-lg shadow-xl flex items-center justify-between transition-all transform duration-300 translate-y-2 opacity-0`;
+            toast.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()" class="ml-3 text-white/80 hover:text-white">&times;</button>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast('API Key copied to clipboard!', 'success');
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // ================= AGENTS API =================
+        async function loadAgents() {
+            try {
+                const res = await fetch(`${API_BASE}/agents`);
+                if (!res.ok) throw new Error('Failed to load agents');
+                currentAgents = await res.json();
+
+                const tbody = document.getElementById('agents-table-body');
+                if (currentAgents.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-500">No agents registered yet. Click "Register New Agent" above.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = currentAgents.map(a => `
+                    <tr class="hover:bg-slate-750 transition">
+                        <td class="px-6 py-4 font-semibold text-white flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-robot"></i>
+                            </span>
+                            <div>
+                                <div>${escapeHtml(a.name)}</div>
+                                <div class="text-xs text-slate-400 font-normal">${escapeHtml(a.description || 'No description')}</div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 font-mono text-xs text-slate-400">${a.id}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2.5 py-1 text-xs rounded-full font-medium ${a.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">
+                                ${a.status}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-xs text-slate-400">${escapeHtml(a.ownerEmail || 'User')}</td>
+                        <td class="px-6 py-4 text-xs text-slate-400">${new Date(a.createdAt).toLocaleString()}</td>
+                        <td class="px-6 py-4 text-right space-x-2">
+                            <button onclick="rotateKey('${a.id}')" title="Rotate API Key" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1.5 rounded text-xs transition">
+                                <i class="fa-solid fa-arrows-rotate"></i> Rotate Key
+                            </button>
+                            <button onclick="deleteAgent('${a.id}')" title="Delete Agent" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 px-2.5 py-1.5 rounded text-xs transition">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function handleCreateAgent(e) {
+            e.preventDefault();
+            const name = document.getElementById('modal-agent-name').value;
+            const description = document.getElementById('modal-agent-desc').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/agents`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, description })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.message || 'Creation failed');
+                }
+
+                const data = await res.json();
+                closeModal('create-agent-modal');
+                document.getElementById('modal-agent-name').value = '';
+                document.getElementById('modal-agent-desc').value = '';
+
+                // Show raw key alert
+                document.getElementById('raw-key-display').innerText = data.apiKey;
+                document.getElementById('new-key-alert').classList.remove('hidden');
+
+                // Also populate in playground key field
+                document.getElementById('action-api-key').value = data.apiKey;
+
+                showToast(`Agent '${data.name}' registered!`, 'success');
+                loadAgents();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function rotateKey(agentId) {
+            if (!confirm('Are you sure you want to rotate this API key? Any bots using the current key will stop working.')) return;
+            try {
+                const res = await fetch(`${API_BASE}/agents/${agentId}/rotate-api-key`, { method: 'POST' });
+                if (!res.ok) throw new Error('Key rotation failed');
+                const data = await res.json();
+
+                document.getElementById('raw-key-display').innerText = data.apiKey;
+                document.getElementById('new-key-alert').classList.remove('hidden');
+                document.getElementById('action-api-key').value = data.apiKey;
+
+                showToast('New API key generated and old key invalidated!', 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function deleteAgent(agentId) {
+            if (!confirm('Delete this agent? All associated policies and logs will remain in audit history.')) return;
+            try {
+                const res = await fetch(`${API_BASE}/agents/${agentId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Deletion failed');
+                showToast('Agent deleted', 'info');
+                loadAgents();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // ================= POLICIES API =================
+        const ALL_ACTIONS = ['SEND_EMAIL', 'READ_EMAIL', 'DELETE_FILE', 'READ_FILE', 'UPDATE_DATABASE', 'EXECUTE_REPORT'];
+
+        async function loadAgentDropdown() {
+            try {
+                const res = await fetch(`${API_BASE}/agents`);
+                currentAgents = await res.json();
+                const select = document.getElementById('policy-agent-select');
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">-- Choose Agent --</option>' +
+                    currentAgents.map(a => `<option value="${a.id}">${escapeHtml(a.name)} (${a.id.substring(0,8)}...)</option>`).join('');
+                if (currentVal) select.value = currentVal;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadAgentPolicies(agentId) {
+            const container = document.getElementById('policy-container');
+            if (!agentId) {
+                container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 bg-slate-800/50 rounded-xl border border-dashed border-slate-700"><p>Select an agent to configure permissions.</p></div>`;
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/agents/${agentId}/policies`);
+                const policies = await res.json();
+                const policyMap = {};
+                policies.forEach(p => policyMap[p.actionType] = p.decision);
+
+                container.innerHTML = ALL_ACTIONS.map(action => {
+                    const currentDecision = policyMap[action] || 'DEFAULT_DENY';
+                    return `
+                        <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-mono font-bold text-sm text-white">${action}</span>
+                                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold ${getDecisionBadge(currentDecision)}">
+                                        ${currentDecision === 'DEFAULT_DENY' ? 'DEFAULT DENY' : currentDecision}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-400 mb-4">${getActionDescription(action)}</p>
+                            </div>
+                            <div class="flex items-center gap-2 pt-3 border-t border-slate-700/60">
+                                <button onclick="setPolicy('${agentId}', '${action}', 'ALLOW')" class="flex-1 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 text-xs py-1.5 rounded transition ${currentDecision === 'ALLOW' ? 'ring-2 ring-emerald-500 font-bold' : ''}">ALLOW</button>
+                                <button onclick="setPolicy('${agentId}', '${action}', 'REQUIRE_APPROVAL')" class="flex-1 bg-amber-600/20 hover:bg-amber-600/40 text-amber-300 text-xs py-1.5 rounded transition ${currentDecision === 'REQUIRE_APPROVAL' ? 'ring-2 ring-amber-500 font-bold' : ''}">APPROVAL</button>
+                                <button onclick="setPolicy('${agentId}', '${action}', 'DENY')" class="flex-1 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 text-xs py-1.5 rounded transition ${currentDecision === 'DENY' ? 'ring-2 ring-rose-500 font-bold' : ''}">DENY</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function getDecisionBadge(decision) {
+            if (decision === 'ALLOW') return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+            if (decision === 'REQUIRE_APPROVAL') return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+            return 'bg-rose-500/20 text-rose-400 border border-rose-500/30';
+        }
+
+        function getActionDescription(action) {
+            switch(action) {
+                case 'SEND_EMAIL': return 'Permit agent to draft & dispatch emails to external contacts.';
+                case 'READ_EMAIL': return 'Permit agent to inspect inbox headers and read messages.';
+                case 'DELETE_FILE': return 'Permit agent to permanently delete files from storage.';
+                case 'READ_FILE': return 'Permit agent to open and inspect file contents.';
+                case 'UPDATE_DATABASE': return 'Permit agent to perform write/update queries against database.';
+                case 'EXECUTE_REPORT': return 'Permit agent to run heavy reporting queries and analytics.';
+                default: return '';
+            }
+        }
+
+        async function setPolicy(agentId, actionType, decision) {
+            try {
+                const res = await fetch(`${API_BASE}/agents/${agentId}/policies`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ actionType, decision })
+                });
+                if (!res.ok) throw new Error('Failed to update policy');
+                showToast(`Policy for ${actionType} set to ${decision}`, 'success');
+                loadAgentPolicies(agentId);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // ================= PLAYGROUND / SIMULATION API =================
+        async function submitAgentAction(e) {
+            e.preventDefault();
+            const apiKey = document.getElementById('action-api-key').value.trim();
+            const actionType = document.getElementById('action-type-select').value;
+            const description = document.getElementById('action-description').value;
+            const paramsRaw = document.getElementById('action-parameters').value;
+
+            let parameters = {};
+            try {
+                parameters = JSON.parse(paramsRaw);
+            } catch (jsonErr) {
+                showToast('Parameters must be valid JSON', 'error');
+                return;
+            }
+
+            const outputEl = document.getElementById('playground-output');
+            const badgeEl = document.getElementById('playground-status-badge');
+            outputEl.innerHTML = `<span class="text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> AgentShield is evaluating request against policies...</span>`;
+
+            try {
+                const res = await fetch(`${API_BASE}/agent-actions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Agent-API-Key': apiKey
+                    },
+                    body: JSON.stringify({ actionType, description, parameters })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    badgeEl.className = 'text-xs px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-400 font-semibold uppercase border border-rose-500/30';
+                    badgeEl.innerText = 'REJECTED / ERROR';
+                    outputEl.innerHTML = `<pre class="text-rose-400 font-mono text-xs w-full">${JSON.stringify(data, null, 2)}</pre>`;
+                    return;
+                }
+
+                if (data.decision === 'ALLOW') {
+                    badgeEl.className = 'text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold uppercase border border-emerald-500/30';
+                    badgeEl.innerText = 'ALLOWED & EXECUTED';
+                } else if (data.decision === 'REQUIRE_APPROVAL') {
+                    badgeEl.className = 'text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 font-semibold uppercase border border-amber-500/30';
+                    badgeEl.innerText = 'PENDING APPROVAL';
+                } else {
+                    badgeEl.className = 'text-xs px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-400 font-semibold uppercase border border-rose-500/30';
+                    badgeEl.innerText = 'DENIED BY POLICY';
+                }
+
+                outputEl.innerHTML = `<pre class="text-slate-200 font-mono text-xs w-full">${JSON.stringify(data, null, 2)}</pre>`;
+
+                // Check pending approvals count
+                checkPendingCount();
+            } catch (err) {
+                badgeEl.innerText = 'ERROR';
+                outputEl.innerHTML = `<span class="text-rose-400">${err.message}</span>`;
+            }
+        }
+
+        // ================= APPROVALS API =================
+        async function checkPendingCount() {
+            try {
+                const res = await fetch(`${API_BASE}/approvals/pending`);
+                const pending = await res.json();
+                const badge = document.getElementById('pending-badge');
+                if (pending.length > 0) {
+                    badge.innerText = pending.length;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            } catch (e) {}
+        }
+
+        async function loadPendingApprovals() {
+            const container = document.getElementById('approvals-container');
+            container.innerHTML = `<div class="py-12 text-center text-slate-500 bg-slate-800 rounded-xl border border-slate-700"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><p>Loading pending approvals...</p></div>`;
+
+            try {
+                const res = await fetch(`${API_BASE}/approvals/pending`);
+                const pending = await res.json();
+
+                checkPendingCount();
+
+                if (pending.length === 0) {
+                    container.innerHTML = `
+                        <div class="py-12 text-center text-slate-500 bg-slate-800 rounded-xl border border-slate-700">
+                            <i class="fa-solid fa-circle-check text-emerald-400 text-3xl mb-2"></i>
+                            <p class="text-slate-300 font-medium">All clear! No pending actions require approval.</p>
+                            <p class="text-xs text-slate-500 mt-1">When an agent requests an action with a REQUIRE_APPROVAL policy, it will appear here.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = pending.map(req => `
+                    <div class="bg-slate-800 border border-amber-500/30 rounded-xl p-5 shadow flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-white">${escapeHtml(req.agentName || 'Agent')}</span>
+                                <span class="text-xs bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded font-mono font-bold">${req.actionType}</span>
+                                <span class="text-xs text-slate-400 font-mono">ID: ${req.id}</span>
+                            </div>
+                            <p class="text-sm text-slate-300">${escapeHtml(req.description || 'No description provided')}</p>
+                            <div class="text-xs font-mono bg-slate-900 text-slate-400 p-2 rounded border border-slate-700 select-all">
+                                Parameters: ${JSON.stringify(req.parameters)}
+                            </div>
+                            <div class="text-[11px] text-slate-500">Requested at: ${new Date(req.createdAt).toLocaleString()} | Expires: ${new Date(req.expiresAt).toLocaleString()}</div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button onclick="decideApproval('${req.id}', 'approve')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-check"></i> Approve & Execute
+                            </button>
+                            <button onclick="decideApproval('${req.id}', 'reject')" class="bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 font-medium px-4 py-2 rounded-lg text-xs border border-rose-500/30 flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-ban"></i> Reject
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function decideApproval(requestId, action) {
+            const comment = prompt(`Optional comments for ${action}:`) || '';
+            try {
+                const res = await fetch(`${API_BASE}/approvals/${requestId}/${action}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comments: comment })
+                });
+
+                if (!res.ok) throw new Error(`Failed to ${action} request`);
+
+                const data = await res.json();
+                showToast(`Request ${action === 'approve' ? 'APPROVED & executed' : 'REJECTED'}!`, 'success');
+                loadPendingApprovals();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // ================= AUDIT LOGS API =================
+        async function loadAuditLogs() {
+            try {
+                const res = await fetch(`${API_BASE}/audit-logs?size=25`);
+                const pageData = await res.json();
+                const logs = pageData.content || [];
+
+                const tbody = document.getElementById('audit-table-body');
+                if (logs.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500">No audit logs recorded yet.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = logs.map(l => `
+                    <tr class="hover:bg-slate-750 transition font-mono">
+                        <td class="px-6 py-3 font-semibold text-blue-400">${l.eventType}</td>
+                        <td class="px-6 py-3">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-bold ${l.result && l.result.includes('DENIED') ? 'bg-rose-500/20 text-rose-400' : (l.result && l.result.includes('PENDING') ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400')}">
+                                ${l.result || 'OK'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-3 text-slate-400">${l.agentId || l.actorId || 'N/A'}</td>
+                        <td class="px-6 py-3 text-slate-500">${new Date(l.createdAt).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAgents();
+            checkPendingCount();
+        });
+    </script>
+</body>
+</html>

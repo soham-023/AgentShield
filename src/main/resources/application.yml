@@ -1,0 +1,64 @@
+# ============================================================
+#  AgentShield — Application Configuration
+# ============================================================
+# Spring Boot reads this file automatically at startup.
+# We use YAML format instead of .properties because it's
+# more readable for nested configurations.
+# ============================================================
+
+spring:
+  application:
+    name: AgentShield
+
+  # ---- Database (PostgreSQL) ----
+  datasource:
+    url: jdbc:postgresql://localhost:5432/agentshield
+    username: agentshield
+    password: agentshield_secret
+    driver-class-name: org.postgresql.Driver
+
+  # ---- JPA / Hibernate ----
+  jpa:
+    hibernate:
+      # "update" auto-creates/updates tables based on entities.
+      # In production, use "validate" + Flyway/Liquibase migrations.
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # ---- Jackson (JSON serialization) ----
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+# ---- Server ----
+server:
+  port: 8080
+
+# ---- Logging ----
+logging:
+  level:
+    com.agentshield: DEBUG
+    org.springframework.security: DEBUG
+
+# ---- Custom Application Properties ----
+# We'll use these in Phase 5 for JWT configuration
+agentshield:
+  jwt:
+    secret: ThisIsASuperSecretKeyForJWTTokenGenerationChangeItInProduction2024!
+    expiration-ms: 86400000  # 24 hours
+  approval:
+    expiration-hours: 24     # Pending approvals expire after 24 hours
+
+# ---- Swagger/OpenAPI ----
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
