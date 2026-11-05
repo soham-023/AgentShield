@@ -2,6 +2,7 @@ package com.agentshield.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -17,14 +18,17 @@ import org.springframework.security.web.SecurityFilterChain;
  * PHASE 5: We'll add JWT authentication, API key auth, and role-based access.
  */
 @Configuration
+    
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        
         http
             // Disable CSRF — we're building a stateless REST API, not a browser form app
             .csrf(AbstractHttpConfigurer::disable)
+            
             // Stateless sessions — no server-side session; every request carries its own auth (JWT)
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -35,6 +39,7 @@ public class SecurityConfig {
             );
 
         return http.build();
+        
     }
 
     /**
