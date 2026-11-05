@@ -1,6 +1,7 @@
 package com.agentshield.exception;
 
 import org.springframework.http.HttpStatus;
+
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
@@ -8,7 +9,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Returns HTTP 403 (Forbidden).
  */
 @ResponseStatus(HttpStatus.FORBIDDEN)
-public class AccessDeniedException extends RuntimeException {
+    
+public class AccessDeniedException extends RuntimeException 
+{
 
     public AccessDeniedException(String message) {
         super(message);
