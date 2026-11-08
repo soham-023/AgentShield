@@ -11,10 +11,11 @@ spring:
     name: AgentShield
 
   # ---- Database (PostgreSQL) ----
+  # Override via environment variables in any non-local environment.
   datasource:
-    url: jdbc:postgresql://localhost:5432/agentshield
-    username: agentshield
-    password: agentshield_secret
+    url: ${AGENTSHIELD_DB_URL:jdbc:postgresql://localhost:5432/agentshield}
+    username: ${AGENTSHIELD_DB_USERNAME:agentshield}
+    password: ${AGENTSHIELD_DB_PASSWORD:agentshield_secret}
     driver-class-name: org.postgresql.Driver
 
   # ---- JPA / Hibernate ----
@@ -37,7 +38,7 @@ spring:
 
 # ---- Server ----
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 # ---- Logging ----
 logging:
@@ -49,8 +50,9 @@ logging:
 # We'll use these in Phase 5 for JWT configuration
 agentshield:
   jwt:
-    secret: ThisIsASuperSecretKeyForJWTTokenGenerationChangeItInProduction2024!
-    expiration-ms: 86400000  # 24 hours
+    # Set AGENTSHIELD_JWT_SECRET in production; the default is for local development only.
+    secret: ${AGENTSHIELD_JWT_SECRET:ThisIsASuperSecretKeyForJWTTokenGenerationChangeItInProduction2024!}
+    expiration-ms: ${AGENTSHIELD_JWT_EXPIRATION_MS:86400000}  # 24 hours
   approval:
     expiration-hours: 24     # Pending approvals expire after 24 hours
 
