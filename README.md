@@ -42,7 +42,7 @@ The app runs on `http://localhost:8080`.
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - Health check: `GET /health`
 
-Demo users are seeded on startup (`demo@agentshield.com`, `admin@agentshield.com`).
+Demo users are seeded on startup (`demo@agentshield.com`, `admin@agentshield.com`). Disable this with `AGENTSHIELD_SEED_DEMO_USERS=false`, or override their passwords with `AGENTSHIELD_DEMO_USER_PASSWORD` / `AGENTSHIELD_DEMO_ADMIN_PASSWORD`.
 
 ## API overview
 

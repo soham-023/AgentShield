@@ -55,6 +55,12 @@ agentshield:
     expiration-ms: ${AGENTSHIELD_JWT_EXPIRATION_MS:86400000}  # 24 hours
   approval:
     expiration-hours: 24     # Pending approvals expire after 24 hours
+  seed:
+    # Seeds demo@agentshield.com and admin@agentshield.com on startup.
+    # Set AGENTSHIELD_SEED_DEMO_USERS=false outside local development.
+    demo-users: ${AGENTSHIELD_SEED_DEMO_USERS:true}
+    demo-user-password: ${AGENTSHIELD_DEMO_USER_PASSWORD:Password123!}
+    demo-admin-password: ${AGENTSHIELD_DEMO_ADMIN_PASSWORD:AdminPass123!}
 
 # ---- Swagger/OpenAPI ----
 springdoc:
