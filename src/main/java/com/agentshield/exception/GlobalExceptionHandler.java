@@ -4,9 +4,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -106,6 +109,52 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .path(request.getRequestURI())
                 .fieldErrors(fieldErrors)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Handles request bodies that cannot be parsed: malformed JSON, or a value
+     * that does not fit the target type (for example an unknown actionType).
+     * Without this, such requests fall through to the catch-all and return 500.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableBody(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+
+        log.warn("Unreadable request body at {}: {}", request.getRequestURI(), ex.getMostSpecificCause().getMessage());
+        return badRequest("Request body is missing, malformed, or contains an invalid value", request);
+    }
+
+    /**
+     * Handles path or query values of the wrong type, such as a non-UUID agentId.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+
+        log.warn("Type mismatch for parameter '{}' at {}", ex.getName(), request.getRequestURI());
+        return badRequest("Invalid value for parameter '" + ex.getName() + "'", request);
+    }
+
+    /**
+     * Handles a required query parameter that was not supplied.
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParameter(
+            MissingServletRequestParameterException ex, HttpServletRequest request) {
+
+        return badRequest("Missing required parameter '" + ex.getParameterName() + "'", request);
+    }
+
+    private ResponseEntity<ErrorResponse> badRequest(String message, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(message)
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);

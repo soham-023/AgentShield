@@ -61,4 +61,31 @@ class GlobalExceptionHandlerTest {
                 "Internal Server Error", "An unexpected error occurred");
         assertFalse(response.getBody().getMessage().contains("hunter2"));
     }
+
+    @Test
+    @DisplayName("unreadable request body maps to 400 instead of 500")
+    void unreadableBody() {
+        var ex = new org.springframework.http.converter.HttpMessageNotReadableException(
+                "JSON parse error: Cannot deserialize value of type ActionType from String \"SEND_MAIL\"",
+                new org.springframework.mock.http.MockHttpInputMessage(new byte[0]));
+        assertError(handler.handleUnreadableBody(ex, request), HttpStatus.BAD_REQUEST,
+                "Bad Request", "Request body is missing, malformed, or contains an invalid value");
+    }
+
+    @Test
+    @DisplayName("wrongly typed path parameter maps to 400 naming the parameter")
+    void typeMismatch() {
+        var ex = new org.springframework.web.method.annotation.MethodArgumentTypeMismatchException(
+                "not-a-uuid", java.util.UUID.class, "agentId", null, new IllegalArgumentException("bad uuid"));
+        assertError(handler.handleTypeMismatch(ex, request), HttpStatus.BAD_REQUEST,
+                "Bad Request", "Invalid value for parameter 'agentId'");
+    }
+
+    @Test
+    @DisplayName("missing query parameter maps to 400 naming the parameter")
+    void missingParameter() {
+        var ex = new org.springframework.web.bind.MissingServletRequestParameterException("status", "String");
+        assertError(handler.handleMissingParameter(ex, request), HttpStatus.BAD_REQUEST,
+                "Bad Request", "Missing required parameter 'status'");
+    }
 }
