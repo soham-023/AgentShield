@@ -54,6 +54,13 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("UnauthorizedException maps to 401")
+    void unauthorized() {
+        assertError(handler.handleUnauthorized(new UnauthorizedException("Authentication is required"), request),
+                HttpStatus.UNAUTHORIZED, "Unauthorized", "Authentication is required");
+    }
+
+    @Test
     @DisplayName("unexpected exceptions map to 500 without leaking their message")
     void unexpected() {
         var response = handler.handleGeneral(new IllegalStateException("db password is hunter2"), request);

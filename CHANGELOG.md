@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Unit tests for `GlobalExceptionHandler` (404/400/403 mapping, 500 responses never leak exception messages).
 
 ### Changed
+- Services no longer fall back to the demo user when nobody is signed in (or the
+  token's user was deleted); they return 401 and never auto-create a user.
 - **Breaking:** the API is no longer open. Every `/api/v1` endpoint needs a user
   (JWT from the new `POST /api/v1/auth/login`, or HTTP Basic), except login, health,
   API docs and agent action submission (`X-Agent-API-Key`). Unauthenticated calls get a JSON 401.

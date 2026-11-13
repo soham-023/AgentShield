@@ -87,6 +87,26 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles service calls that need a signed-in user when there is none.
+     */
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(
+            UnauthorizedException ex, HttpServletRequest request) {
+
+        log.warn("Unauthorized at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error("Unauthorized")
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    /**
      * Handles failed logins (wrong email or password). The message is kept
      * generic so it does not reveal which of the two was wrong.
      */

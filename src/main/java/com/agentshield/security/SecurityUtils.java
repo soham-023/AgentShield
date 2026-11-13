@@ -1,19 +1,20 @@
 package com.agentshield.security;
 
 import com.agentshield.entity.User;
-import com.agentshield.enums.UserRole;
+import com.agentshield.exception.UnauthorizedException;
 import com.agentshield.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 /**
- * Utility to identify the current user in business services.
+ * Resolves the signed-in user for business services.
  *
- * In Phases 2-4 (prior to JWT): If no JWT principal is present in the SecurityContext,
- * it falls back to the default demo user so all CRUD operations can be tested cleanly.
- * In Phase 5: Once JWT is active, it extracts the authenticated user from the SecurityContext.
+ * <p>There is no fallback user: with no authentication, an anonymous one, or a
+ * principal that no longer exists in the database, {@link #getCurrentUser()}
+ * throws {@link UnauthorizedException}, which the API returns as 401.
  */
 @Component
 @RequiredArgsConstructor
@@ -21,31 +22,20 @@ public class SecurityUtils {
 
     private final UserRepository userRepository;
 
-    public static final String DEFAULT_USER_EMAIL = "demo@agentshield.com";
-
     /**
-     * Resolves the current user.
+     * Returns the user behind the current request.
+     *
+     * @throws UnauthorizedException if nobody is signed in or the user is gone
      */
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication != null && authentication.isAuthenticated()
-                && !"anonymousUser".equals(authentication.getPrincipal())) {
-            String email = authentication.getName();
-            return userRepository.findByEmail(email)
-                    .orElseGet(this::getDefaultUser);
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            throw new UnauthorizedException("Authentication is required to access this resource");
         }
 
-        return getDefaultUser();
-    }
-
-    private User getDefaultUser() {
-        return userRepository.findByEmail(DEFAULT_USER_EMAIL)
-                .orElseGet(() -> userRepository.save(User.builder()
-                        .name("Demo User")
-                        .email(DEFAULT_USER_EMAIL)
-                        .passwordHash("$2a$10$demoHashedPasswordPlaceholder")
-                        .role(UserRole.USER)
-                        .build()));
+        return userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new UnauthorizedException("Authenticated user no longer exists"));
     }
 }
