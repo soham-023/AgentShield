@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Unit tests for `GlobalExceptionHandler` (404/400/403 mapping, 500 responses never leak exception messages).
 
 ### Changed
+- **Breaking:** the API is no longer open. Every `/api/v1` endpoint needs a user
+  (JWT from the new `POST /api/v1/auth/login`, or HTTP Basic), except login, health,
+  API docs and agent action submission (`X-Agent-API-Key`). Unauthenticated calls get a JSON 401.
 - **Breaking:** `AGENTSHIELD_JWT_SECRET` and `AGENTSHIELD_DB_PASSWORD` are now required.
   The hard-coded defaults were removed; startup fails with a clear message if the JWT
   secret is missing or shorter than 32 bytes. Tests use a dedicated `test` profile.

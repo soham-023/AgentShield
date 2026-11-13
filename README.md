@@ -59,10 +59,30 @@ The app runs on `http://localhost:8080`.
 
 Demo users are seeded on startup (`demo@agentshield.com`, `admin@agentshield.com`). Disable this with `AGENTSHIELD_SEED_DEMO_USERS=false`, or override their passwords with `AGENTSHIELD_DEMO_USER_PASSWORD` / `AGENTSHIELD_DEMO_ADMIN_PASSWORD`.
 
+## Authentication
+
+Everything under `/api/v1` needs a signed-in user, except:
+
+- `POST /api/v1/auth/login`, `GET /health`, `GET /api/v1/health`, Swagger UI and `/api-docs`
+- `POST /api/v1/agent-actions`, where agents authenticate with their `X-Agent-API-Key`
+
+Log in to get a JWT and send it as a bearer token:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"demo@agentshield.com","password":"Password123!"}' | jq -r .accessToken)
+
+curl http://localhost:8080/api/v1/agents -H "Authorization: Bearer $TOKEN"
+```
+
+HTTP Basic with the same email and password also works; the dashboard uses it, so the browser asks for credentials on first load. Unauthenticated calls get a JSON `401`.
+
 ## API overview
 
 | Area | Method & path | Purpose |
 |---|---|---|
+| Auth | `POST /api/v1/auth/login` | Exchange email + password for a JWT |
 | Agents | `POST /api/v1/agents` | Register an agent (returns its API key) |
 | | `GET /api/v1/agents` · `GET /api/v1/agents/{agentId}` | List / view agents |
 | | `PUT /api/v1/agents/{agentId}` · `DELETE /api/v1/agents/{agentId}` | Update / remove an agent |
@@ -100,6 +120,6 @@ Tests run with the `test` profile (`src/test/resources/application-test.yml`): a
 
 ## Roadmap
 
-- JWT authentication for human users and role-based access (`ADMIN` / `USER`)
+- Role-based access (`ADMIN` / `USER`)
 - Real action executors in place of the simulated one
 - Database migrations (Flyway) instead of `ddl-auto: update`
