@@ -2,7 +2,8 @@
 #  AgentShield — Docker Compose
 # ============================================================
 #  Spins up PostgreSQL for local development.
-#  Usage:  docker compose up -d
+#  Usage:  AGENTSHIELD_DB_PASSWORD=<password> docker compose up -d
+#          (or put AGENTSHIELD_DB_PASSWORD in a .env file next to this one)
 #  Stop:   docker compose down
 #  Reset:  docker compose down -v  (deletes all data)
 # ============================================================
@@ -14,7 +15,7 @@ services:
     environment:
       POSTGRES_DB: agentshield
       POSTGRES_USER: agentshield
-      POSTGRES_PASSWORD: agentshield_secret
+      POSTGRES_PASSWORD: ${AGENTSHIELD_DB_PASSWORD:?Set AGENTSHIELD_DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:

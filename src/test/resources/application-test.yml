@@ -1,7 +1,9 @@
 # ============================================================
-#  Test Configuration
+#  Test profile ("test")
 # ============================================================
-# Uses H2 in-memory database so tests run without PostgreSQL.
+# Layered on top of src/main/resources/application.yml when a test
+# runs with @ActiveProfiles("test"). Uses an in-memory H2 database and
+# fixed test credentials, so no environment variables are needed.
 
 spring:
   datasource:

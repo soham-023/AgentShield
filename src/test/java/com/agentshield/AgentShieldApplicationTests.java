@@ -9,7 +9,7 @@ import org.springframework.test.context.ActiveProfiles;
  * Smoke test: verifies the Spring application context loads successfully.
  *
  * @SpringBootTest boots the full application context.
- * @ActiveProfiles("test") — not used yet but ready for profile-based config.
+ * @ActiveProfiles("test") layers application-test.yml (H2, test secrets) on top of application.yml.
  *
  * If this test passes, it means:
  *   - All beans are wired correctly
@@ -18,6 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
  *   - Database connection (H2 for tests) works
  */
 @SpringBootTest
+@ActiveProfiles("test")
 class AgentShieldApplicationTests {
     
 

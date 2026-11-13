@@ -4,7 +4,8 @@
 #  Build:  docker build -t agentshield .
 #  Run:    docker run -p 8080:8080 \
 #            -e AGENTSHIELD_DB_URL=jdbc:postgresql://host.docker.internal:5432/agentshield \
-#            -e AGENTSHIELD_JWT_SECRET=change-me \
+#            -e AGENTSHIELD_DB_PASSWORD=<db-password> \
+#            -e AGENTSHIELD_JWT_SECRET="$(openssl rand -base64 48)" \
 #            agentshield
 # ============================================================
 

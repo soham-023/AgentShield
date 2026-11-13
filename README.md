@@ -29,12 +29,27 @@ Supported action types: `READ_EMAIL`, `SEND_EMAIL`, `READ_FILE`, `DELETE_FILE`, 
 Prerequisites: Java 21, Maven, Docker.
 
 ```bash
-# 1. Start PostgreSQL
+# 1. Set the required secrets (no defaults are shipped)
+export AGENTSHIELD_DB_PASSWORD='choose-a-db-password'
+export AGENTSHIELD_JWT_SECRET="$(openssl rand -base64 48)"
+
+# 2. Start PostgreSQL
 docker compose up -d
 
-# 2. Run the app
+# 3. Run the app
 mvn spring-boot:run
 ```
+
+### Configuration
+
+| Variable | Required | Default | Notes |
+|---|---|---|---|
+| `AGENTSHIELD_DB_PASSWORD` | yes | none | Also used by `docker compose` for the Postgres container |
+| `AGENTSHIELD_JWT_SECRET` | yes | none | At least 32 bytes; startup fails with a clear message otherwise |
+| `AGENTSHIELD_DB_URL` | no | `jdbc:postgresql://localhost:5432/agentshield` | |
+| `AGENTSHIELD_DB_USERNAME` | no | `agentshield` | |
+| `AGENTSHIELD_JWT_EXPIRATION_MS` | no | `86400000` (24 h) | |
+| `PORT` | no | `8080` | |
 
 The app runs on `http://localhost:8080`.
 
@@ -81,7 +96,7 @@ curl -X POST http://localhost:8080/api/v1/agent-actions \
 mvn test
 ```
 
-Tests use an in-memory H2 database, so no Docker is needed.
+Tests run with the `test` profile (`src/test/resources/application-test.yml`): an in-memory H2 database and fixed test secrets, so no Docker or environment variables are needed.
 
 ## Roadmap
 

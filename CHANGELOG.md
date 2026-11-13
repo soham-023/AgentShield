@@ -16,8 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Unit tests for `GlobalExceptionHandler` (404/400/403 mapping, 500 responses never leak exception messages).
 
 ### Changed
-- Database credentials, JWT secret and server port are read from environment
-  variables, with local development defaults.
+- **Breaking:** `AGENTSHIELD_JWT_SECRET` and `AGENTSHIELD_DB_PASSWORD` are now required.
+  The hard-coded defaults were removed; startup fails with a clear message if the JWT
+  secret is missing or shorter than 32 bytes. Tests use a dedicated `test` profile.
+- Database URL/username and server port are read from environment variables, with
+  local development defaults.
 - `SubmitActionRequest` validates description and idempotency key length to
   match the database column sizes.
 - Demo user seeding can be turned off with `AGENTSHIELD_SEED_DEMO_USERS=false`, and the
