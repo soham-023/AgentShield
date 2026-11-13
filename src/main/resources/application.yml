@@ -46,8 +46,7 @@ logging:
     com.agentshield: DEBUG
     org.springframework.security: DEBUG
 
-# ---- Custom Application Properties ----
-# We'll use these in Phase 5 for JWT configuration
+# ---- AgentShield settings ----
 agentshield:
   jwt:
     # Required, no default. At least 32 bytes (256 bits) for HMAC-SHA256;

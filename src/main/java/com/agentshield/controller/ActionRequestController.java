@@ -2,6 +2,7 @@ package com.agentshield.controller;
 
 import com.agentshield.dto.request.SubmitActionRequest;
 import com.agentshield.dto.response.ActionRequestResponse;
+import com.agentshield.security.ApiHeaders;
 import com.agentshield.service.ActionRequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,7 +25,7 @@ public class ActionRequestController {
     @PostMapping
     @Operation(summary = "Submit an action request", description = "AI Agent presents its API key and requests an action (e.g., SEND_EMAIL)")
     public ResponseEntity<ActionRequestResponse> submitAction(
-            @RequestHeader(value = "X-Agent-API-Key", required = false) String apiKey,
+            @RequestHeader(value = ApiHeaders.AGENT_API_KEY, required = false) String apiKey,
             @Valid @RequestBody SubmitActionRequest request) {
         ActionRequestResponse response = actionRequestService.processActionRequest(apiKey, request);
         return ResponseEntity.ok(response);

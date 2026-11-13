@@ -14,9 +14,11 @@ import com.agentshield.executor.SimulatedActionExecutor;
 import com.agentshield.repository.ActionRequestRepository;
 import com.agentshield.repository.AgentRepository;
 import com.agentshield.repository.ExecutionRecordRepository;
+import com.agentshield.security.ApiHeaders;
 import com.agentshield.util.ApiKeyUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Handles action requests submitted by agents: authenticates the agent by
+ * API key, evaluates its policy, then executes, rejects, or parks the request
+ * for human approval, recording each step in the audit log.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -37,6 +44,10 @@ public class ActionRequestService {
     private final SimulatedActionExecutor actionExecutor;
     private final AuditService auditService;
     private final ExecutionRecordRepository executionRecordRepository;
+
+    /** How long a REQUIRE_APPROVAL request waits for a human before it expires. */
+    @Value("${agentshield.approval.expiration-hours:24}")
+    private long approvalExpirationHours = 24;
 
     @Transactional
     public ActionRequestResponse processActionRequest(String rawApiKey, SubmitActionRequest request) {
@@ -107,7 +118,7 @@ public class ActionRequestService {
             }
             case REQUIRE_APPROVAL -> {
                 actionRequest.setStatus(RequestStatus.PENDING_APPROVAL);
-                actionRequest.setExpiresAt(LocalDateTime.now().plusHours(24));
+                actionRequest.setExpiresAt(LocalDateTime.now().plusHours(approvalExpirationHours));
                 actionRequest = actionRequestRepository.save(actionRequest);
 
                 auditService.recordEvent(
@@ -140,7 +151,7 @@ public class ActionRequestService {
 
     private Agent authenticateAgent(String rawApiKey) {
         if (rawApiKey == null || rawApiKey.isBlank()) {
-            throw new AccessDeniedException("Missing required 'X-Agent-API-Key' header");
+            throw new AccessDeniedException("Missing required '" + ApiHeaders.AGENT_API_KEY + "' header");
         }
         String keyHash = ApiKeyUtils.hashApiKey(rawApiKey.trim());
         return agentRepository.findByApiKeyHash(keyHash)

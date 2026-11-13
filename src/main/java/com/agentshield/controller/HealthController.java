@@ -8,10 +8,8 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
- * Simple health check endpoint.
- * Used to verify the application is running and can respond to requests.
- *
- * Try it: GET http://localhost:8080/api/v1/health
+ * Liveness check, public (no authentication) so load balancers and
+ * container health checks can call it: {@code GET /health} or {@code GET /api/v1/health}.
  */
 @RestController
 public class HealthController {

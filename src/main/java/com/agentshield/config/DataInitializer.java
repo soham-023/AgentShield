@@ -12,8 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /**
- * Seeds initial users into the database on startup if they don't already exist.
- * This makes testing immediately available without having to manually seed users.
+ * Seeds a demo user and a demo admin on startup if they don't already exist,
+ * so a fresh local instance can be used straight away.
  *
  * <p>Seeding is controlled by {@code agentshield.seed.demo-users} (env
  * {@code AGENTSHIELD_SEED_DEMO_USERS}); set it to {@code false} in any shared or
@@ -26,6 +26,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class DataInitializer implements CommandLineRunner {
 
+    public static final String DEMO_USER_EMAIL = "demo@agentshield.com";
+    public static final String DEMO_ADMIN_EMAIL = "admin@agentshield.com";
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -37,26 +40,26 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (!userRepository.existsByEmail("demo@agentshield.com")) {
+        if (!userRepository.existsByEmail(DEMO_USER_EMAIL)) {
             User demoUser = User.builder()
                     .name("Demo User")
-                    .email("demo@agentshield.com")
+                    .email(DEMO_USER_EMAIL)
                     .passwordHash(passwordEncoder.encode(demoUserPassword))
                     .role(UserRole.USER)
                     .build();
             userRepository.save(demoUser);
-            log.info("Initialized default user: demo@agentshield.com (Role: USER)");
+            log.info("Initialized default user: {} (Role: USER)", DEMO_USER_EMAIL);
         }
 
-        if (!userRepository.existsByEmail("admin@agentshield.com")) {
+        if (!userRepository.existsByEmail(DEMO_ADMIN_EMAIL)) {
             User adminUser = User.builder()
                     .name("System Admin")
-                    .email("admin@agentshield.com")
+                    .email(DEMO_ADMIN_EMAIL)
                     .passwordHash(passwordEncoder.encode(demoAdminPassword))
                     .role(UserRole.ADMIN)
                     .build();
             userRepository.save(adminUser);
-            log.info("Initialized default admin: admin@agentshield.com (Role: ADMIN)");
+            log.info("Initialized default admin: {} (Role: ADMIN)", DEMO_ADMIN_EMAIL);
         }
     }
 }

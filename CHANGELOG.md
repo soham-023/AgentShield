@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Unit tests for `GlobalExceptionHandler` (404/400/403 mapping, 500 responses never leak exception messages).
 
 ### Changed
+- Pending approvals now expire after `agentshield.approval.expiration-hours`
+  (default 24), which was configured but ignored: the 24 hours was hard-coded.
+- The `X-Agent-API-Key` header name lives in one constant, and stale "Phase 5"
+  comments and Javadoc were replaced with what the code actually does.
 - Services no longer fall back to the demo user when nobody is signed in (or the
   token's user was deleted); they return 401 and never auto-create a user.
 - **Breaking:** the API is no longer open. Every `/api/v1` endpoint needs a user
