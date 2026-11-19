@@ -55,6 +55,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(
             BadRequestException ex, HttpServletRequest request) {
+        
 
         log.warn("Bad request: {}", ex.getMessage());
 
@@ -71,6 +72,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(
+        
             AccessDeniedException ex, HttpServletRequest request) {
 
         log.warn("Access denied: {}", ex.getMessage());
@@ -79,6 +81,7 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN.value())
                 .error("Forbidden")
                 .message(ex.getMessage())
+            
                 .timestamp(LocalDateTime.now())
                 .path(request.getRequestURI())
                 .build();
@@ -97,6 +100,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.UNAUTHORIZED.value())
+            
                 .error("Unauthorized")
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
@@ -113,6 +117,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthentication(
             AuthenticationException ex, HttpServletRequest request) {
+        
 
         log.warn("Authentication failed at {}: {}", request.getRequestURI(), ex.getClass().getSimpleName());
 
@@ -137,6 +142,7 @@ public class GlobalExceptionHandler {
 
         List<ErrorResponse.FieldError> fieldErrors = ex.getBindingResult()
                 .getFieldErrors()
+            
                 .stream()
                 .map(fe -> ErrorResponse.FieldError.builder()
                         .field(fe.getField())
@@ -148,6 +154,7 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("Validation Failed")
                 .message("One or more fields have invalid values")
+            
                 .timestamp(LocalDateTime.now())
                 .path(request.getRequestURI())
                 .fieldErrors(fieldErrors)
