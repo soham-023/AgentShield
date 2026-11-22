@@ -1,7 +1,6 @@
 package com.agentshield.config;
 
 import com.agentshield.entity.User;
-
 import com.agentshield.enums.UserRole;
 import com.agentshield.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +19,10 @@ import org.springframework.stereotype.Component;
  * {@code AGENTSHIELD_SEED_DEMO_USERS}); set it to {@code false} in any shared or
  * production environment. The demo passwords can be overridden with
  * {@code AGENTSHIELD_DEMO_USER_PASSWORD} and {@code AGENTSHIELD_DEMO_ADMIN_PASSWORD}.
- 
  */
 @Component
 @ConditionalOnProperty(prefix = "agentshield.seed", name = "demo-users", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
-    
 @Slf4j
 public class DataInitializer implements CommandLineRunner {
 
@@ -37,7 +34,6 @@ public class DataInitializer implements CommandLineRunner {
 
     @Value("${agentshield.seed.demo-user-password:Password123!}")
     private String demoUserPassword;
-    
 
     @Value("${agentshield.seed.demo-admin-password:AdminPass123!}")
     private String demoAdminPassword;
@@ -48,7 +44,6 @@ public class DataInitializer implements CommandLineRunner {
             User demoUser = User.builder()
                     .name("Demo User")
                     .email(DEMO_USER_EMAIL)
-                
                     .passwordHash(passwordEncoder.encode(demoUserPassword))
                     .role(UserRole.USER)
                     .build();
