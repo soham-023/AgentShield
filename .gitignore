@@ -18,3 +18,13 @@ Thumbs.db
 
 # Environment
 .env
+.env.*
+!.env.example
+
+# Editor swap/backup files
+*.swp
+*~
+
+# VS Code / Eclipse build output
+bin/
+out/
