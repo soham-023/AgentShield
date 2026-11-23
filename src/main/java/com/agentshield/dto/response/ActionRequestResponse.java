@@ -13,6 +13,11 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * An action request as returned by the API: the policy decision, current
+ * status, approval expiry (for pending requests) and, once the action has run,
+ * the simulated execution result.
+ */
 @Data
 @Builder
 @NoArgsConstructor

@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/** A permission policy as returned by the API: one decision for one action type of one agent. */
 @Data
 @Builder
 @NoArgsConstructor
