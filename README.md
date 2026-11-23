@@ -118,6 +118,16 @@ mvn test
 
 Tests run with the `test` profile (`src/test/resources/application-test.yml`): an in-memory H2 database and fixed test secrets, so no Docker or environment variables are needed.
 
+## Troubleshooting
+
+| Symptom | Likely cause and fix |
+|---|---|
+| Startup fails mentioning `agentshield.jwt.secret` | `AGENTSHIELD_JWT_SECRET` is unset or shorter than 32 bytes. Generate one with `openssl rand -base64 48`. |
+| Startup cannot connect to PostgreSQL | The database is not running or `AGENTSHIELD_DB_PASSWORD` differs from the one Postgres was first started with. Run `docker compose up -d`; if you changed the password, recreate the volume with `docker compose down -v`. |
+| `401` on `/api/v1/...` | No user credentials. Log in at `POST /api/v1/auth/login` and send `Authorization: Bearer <token>`, or use HTTP Basic. |
+| `403` from `POST /api/v1/agent-actions` | The `X-Agent-API-Key` header is missing or the key is wrong. Keys are shown only once; rotate the key to get a new one. |
+| Action comes back `REJECTED` | The agent has no policy for that action type (default deny) or its policy is `DENY`. |
+
 ## Roadmap
 
 - Role-based access (`ADMIN` / `USER`)
