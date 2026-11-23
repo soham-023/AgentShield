@@ -127,4 +127,16 @@ class ActionRequestServiceTest {
 
         verify(agentRepository).findByApiKeyHash(ApiKeyUtils.hashApiKey(RAW_KEY));
     }
+
+    @Test
+    @DisplayName("A disabled agent cannot submit actions")
+    void disabledAgentIsRejected() {
+        agent.setStatus(AgentStatus.DISABLED);
+        agentFound();
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> actionRequestService.processActionRequest(RAW_KEY, request));
+        assertTrue(ex.getMessage().contains("DISABLED"));
+        verifyNoInteractions(policyService, actionRequestRepository, auditService);
+    }
 }
