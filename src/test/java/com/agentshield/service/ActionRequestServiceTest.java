@@ -225,4 +225,32 @@ class ActionRequestServiceTest {
 
         assertDoesNotThrow(() -> UUID.fromString(response.getIdempotencyKey()));
     }
+
+    @Test
+    @DisplayName("Looking up an unknown request id gives 404")
+    void unknownRequestIdIsNotFound() {
+        UUID id = UUID.randomUUID();
+        when(actionRequestRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> actionRequestService.getRequestById(id));
+    }
+
+    @Test
+    @DisplayName("Listing requests attaches each request's execution result")
+    void listingIncludesExecutionResults() {
+        ActionRequest executed = ActionRequest.builder().id(UUID.randomUUID()).agent(agent)
+                .actionType(ActionType.READ_FILE).status(RequestStatus.EXECUTED).idempotencyKey("k1").build();
+        ActionRequest rejected = ActionRequest.builder().id(UUID.randomUUID()).agent(agent)
+                .actionType(ActionType.DELETE_FILE).status(RequestStatus.REJECTED).idempotencyKey("k2").build();
+        when(actionRequestRepository.findAll()).thenReturn(List.of(executed, rejected));
+        when(executionRecordRepository.findByActionRequestId(executed.getId()))
+                .thenReturn(Optional.of(ExecutionRecord.builder().result("File read").build()));
+        when(executionRecordRepository.findByActionRequestId(rejected.getId())).thenReturn(Optional.empty());
+
+        List<ActionRequestResponse> responses = actionRequestService.getAllRequests();
+
+        assertEquals(2, responses.size());
+        assertEquals("File read", responses.get(0).getExecutionResult());
+        assertNull(responses.get(1).getExecutionResult());
+    }
 }
