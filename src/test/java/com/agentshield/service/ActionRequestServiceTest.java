@@ -193,4 +193,36 @@ class ActionRequestServiceTest {
         verify(auditService).recordEvent(any(), any(), any(),
                 eq(AuditEventType.ACTION_PENDING_APPROVAL), eq("PENDING_HUMAN_APPROVAL"), anyMap());
     }
+
+    @Test
+    @DisplayName("A repeated idempotency key returns the existing request")
+    void repeatedIdempotencyKeyReturnsExistingRequest() {
+        agentFound();
+        ActionRequest existing = ActionRequest.builder().id(UUID.randomUUID()).agent(agent)
+                .actionType(ActionType.SEND_EMAIL).status(RequestStatus.EXECUTED)
+                .decision(PermissionDecision.ALLOW).idempotencyKey("retry-1").build();
+        when(actionRequestRepository.findByIdempotencyKey("retry-1")).thenReturn(Optional.of(existing));
+        when(executionRecordRepository.findByActionRequestId(existing.getId()))
+                .thenReturn(Optional.of(ExecutionRecord.builder().result("Email sent").build()));
+        request.setIdempotencyKey("  retry-1 ");
+
+        ActionRequestResponse response = actionRequestService.processActionRequest(RAW_KEY, request);
+
+        assertEquals(existing.getId(), response.getId());
+        assertEquals("Email sent", response.getExecutionResult());
+        verify(actionRequestRepository, never()).save(any());
+        verifyNoInteractions(policyService, actionExecutor, auditService);
+    }
+
+    @Test
+    @DisplayName("Without an idempotency key a random one is generated")
+    void missingIdempotencyKeyIsGenerated() {
+        agentFound();
+        when(policyService.evaluatePermission(agent, ActionType.SEND_EMAIL)).thenReturn(PermissionDecision.DENY);
+        saveReturnsWithId();
+
+        ActionRequestResponse response = actionRequestService.processActionRequest(RAW_KEY, request);
+
+        assertDoesNotThrow(() -> UUID.fromString(response.getIdempotencyKey()));
+    }
 }
