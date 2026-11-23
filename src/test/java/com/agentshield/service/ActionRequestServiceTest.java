@@ -173,4 +173,24 @@ class ActionRequestServiceTest {
         verify(auditService).recordEvent(any(), any(), any(),
                 eq(AuditEventType.ACTION_DENIED), eq("DENIED_BY_POLICY"), anyMap());
     }
+
+    @Test
+    @DisplayName("REQUIRE_APPROVAL parks the request and sets its expiry")
+    void approvalRequiredActionIsParked() {
+        agentFound();
+        when(policyService.evaluatePermission(agent, ActionType.SEND_EMAIL))
+                .thenReturn(PermissionDecision.REQUIRE_APPROVAL);
+        saveReturnsWithId();
+
+        LocalDateTime before = LocalDateTime.now();
+        ActionRequestResponse response = actionRequestService.processActionRequest(RAW_KEY, request);
+
+        assertEquals(RequestStatus.PENDING_APPROVAL, response.getStatus());
+        assertNotNull(response.getExpiresAt());
+        assertFalse(response.getExpiresAt().isBefore(before.plusHours(24)));
+        assertTrue(response.getExpiresAt().isBefore(before.plusHours(25)));
+        verifyNoInteractions(actionExecutor);
+        verify(auditService).recordEvent(any(), any(), any(),
+                eq(AuditEventType.ACTION_PENDING_APPROVAL), eq("PENDING_HUMAN_APPROVAL"), anyMap());
+    }
 }
