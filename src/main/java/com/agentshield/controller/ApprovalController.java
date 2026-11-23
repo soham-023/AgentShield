@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Lets an agent's owner list actions waiting for approval and approve or
+ * reject them. Approved actions are executed straight away.
+ */
 @RestController
 @RequestMapping("/api/v1/approvals")
 @RequiredArgsConstructor

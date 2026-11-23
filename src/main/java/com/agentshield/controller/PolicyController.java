@@ -14,6 +14,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Manages an agent's permission policies: one {@code ALLOW}, {@code DENY} or
+ * {@code REQUIRE_APPROVAL} decision per action type. Action types with no
+ * policy are denied by default.
+ */
 @RestController
 @RequestMapping("/api/v1/agents/{agentId}/policies")
 @RequiredArgsConstructor

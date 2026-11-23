@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Lets a signed-in user register, view, update and delete their AI agents and
+ * rotate an agent's API key. The raw key is returned only when it is issued.
+ */
 @RestController
 @RequestMapping("/api/v1/agents")
 @RequiredArgsConstructor
