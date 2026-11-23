@@ -14,6 +14,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Endpoints for AI agents to submit actions and for users to review them.
+ *
+ * <p>{@code POST /api/v1/agent-actions} authenticates with the agent's
+ * {@code X-Agent-API-Key} header; the read endpoints need a signed-in user.
+ */
 @RestController
 @RequestMapping("/api/v1/agent-actions")
 @RequiredArgsConstructor

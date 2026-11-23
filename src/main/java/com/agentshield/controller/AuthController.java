@@ -18,6 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Exchanges a user's email and password for a signed JWT
+ * ({@code POST /api/v1/auth/login}), sent afterwards as a bearer token.
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor

@@ -14,6 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Read-only access to the audit trail, newest entries first, paged with
+ * {@code page} (default 0) and {@code size} (default 50).
+ */
 @RestController
 @RequestMapping("/api/v1/audit-logs")
 @RequiredArgsConstructor
