@@ -56,6 +56,18 @@ public class ActionRequestService {
     @Value("${agentshield.approval.expiration-hours:24}")
     private long approvalExpirationHours = 24;
 
+    /**
+     * Authenticates the agent, evaluates its policy for the requested action and
+     * then executes it ({@code ALLOW}), rejects it ({@code DENY}) or parks it for a
+     * human ({@code REQUIRE_APPROVAL}). A repeated idempotency key returns the
+     * request already stored under it instead of creating a new one.
+     *
+     * @param rawApiKey the agent's raw API key from the {@code X-Agent-API-Key} header
+     * @param request   the action the agent wants to take
+     * @return the stored request, including the execution result when it ran
+     * @throws AccessDeniedException if the key is missing or matches no agent
+     * @throws BadRequestException   if the agent is disabled
+     */
     @Transactional
     public ActionRequestResponse processActionRequest(String rawApiKey, SubmitActionRequest request) {
         // 1. Authenticate Agent by hashing the incoming API Key
@@ -142,6 +154,7 @@ public class ActionRequestService {
         return ActionRequestResponse.fromEntity(actionRequest, executionResult);
     }
 
+    /** Returns every action request, each with its execution result if it ran. */
     @Transactional(readOnly = true)
     public List<ActionRequestResponse> getAllRequests() {
         return actionRequestRepository.findAll().stream()
@@ -149,6 +162,11 @@ public class ActionRequestService {
                 .toList();
     }
 
+    /**
+     * Returns one action request by id.
+     *
+     * @throws ResourceNotFoundException if no request has that id
+     */
     @Transactional(readOnly = true)
     public ActionRequestResponse getRequestById(UUID id) {
         ActionRequest req = actionRequestRepository.findById(id)
