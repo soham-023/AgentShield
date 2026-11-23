@@ -157,4 +157,20 @@ class ActionRequestServiceTest {
         verify(auditService).recordEvent(eq(agent.getId()), eq(agent.getId()), eq(response.getId()),
                 eq(AuditEventType.ACTION_EXECUTED), eq("ALLOWED_AND_EXECUTED"), anyMap());
     }
+
+    @Test
+    @DisplayName("DENY rejects the action without executing it")
+    void deniedActionIsNotExecuted() {
+        agentFound();
+        when(policyService.evaluatePermission(agent, ActionType.SEND_EMAIL)).thenReturn(PermissionDecision.DENY);
+        saveReturnsWithId();
+
+        ActionRequestResponse response = actionRequestService.processActionRequest(RAW_KEY, request);
+
+        assertEquals(RequestStatus.REJECTED, response.getStatus());
+        assertNull(response.getExecutionResult());
+        verifyNoInteractions(actionExecutor);
+        verify(auditService).recordEvent(any(), any(), any(),
+                eq(AuditEventType.ACTION_DENIED), eq("DENIED_BY_POLICY"), anyMap());
+    }
 }
