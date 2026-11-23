@@ -8,6 +8,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Body of {@code POST /api/v1/agents/{agentId}/policies}: the decision to apply
+ * to one action type for this agent.
+ */
 @Data
 @Builder
 @NoArgsConstructor

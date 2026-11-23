@@ -9,6 +9,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Body of {@code PUT /api/v1/agents/{agentId}}. Replaces the agent's name,
+ * description and status; set status to {@code DISABLED} to block the agent.
+ */
 @Data
 @Builder
 @NoArgsConstructor

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/** Body of {@code POST /api/v1/agents}: the new agent's name and optional description. */
 @Data
 @Builder
 @NoArgsConstructor

@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/** Optional body when approving or rejecting a pending action: a free-text comment. */
 @Data
 @Builder
 @NoArgsConstructor
