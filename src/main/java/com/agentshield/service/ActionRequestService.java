@@ -38,6 +38,13 @@ import java.util.UUID;
 @Slf4j
 public class ActionRequestService {
 
+    /** Audit result recorded when a policy allowed an action and it ran. */
+    static final String RESULT_ALLOWED_AND_EXECUTED = "ALLOWED_AND_EXECUTED";
+    /** Audit result recorded when a policy denied an action. */
+    static final String RESULT_DENIED_BY_POLICY = "DENIED_BY_POLICY";
+    /** Audit result recorded when an action was parked for human approval. */
+    static final String RESULT_PENDING_HUMAN_APPROVAL = "PENDING_HUMAN_APPROVAL";
+
     private final ActionRequestRepository actionRequestRepository;
     private final AgentRepository agentRepository;
     private final PolicyService policyService;
@@ -99,7 +106,7 @@ public class ActionRequestService {
                         agent.getId(),
                         actionRequest.getId(),
                         AuditEventType.ACTION_EXECUTED,
-                        "ALLOWED_AND_EXECUTED",
+                        RESULT_ALLOWED_AND_EXECUTED,
                         Map.of("actionType", request.getActionType().name())
                 );
             }
@@ -112,7 +119,7 @@ public class ActionRequestService {
                         agent.getId(),
                         actionRequest.getId(),
                         AuditEventType.ACTION_DENIED,
-                        "DENIED_BY_POLICY",
+                        RESULT_DENIED_BY_POLICY,
                         Map.of("actionType", request.getActionType().name())
                 );
             }
@@ -126,7 +133,7 @@ public class ActionRequestService {
                         agent.getId(),
                         actionRequest.getId(),
                         AuditEventType.ACTION_PENDING_APPROVAL,
-                        "PENDING_HUMAN_APPROVAL",
+                        RESULT_PENDING_HUMAN_APPROVAL,
                         Map.of("actionType", request.getActionType().name())
                 );
             }
