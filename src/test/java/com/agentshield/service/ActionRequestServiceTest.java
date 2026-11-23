@@ -139,4 +139,22 @@ class ActionRequestServiceTest {
         assertTrue(ex.getMessage().contains("DISABLED"));
         verifyNoInteractions(policyService, actionRequestRepository, auditService);
     }
+
+    @Test
+    @DisplayName("ALLOW executes the action at once and audits ACTION_EXECUTED")
+    void allowedActionIsExecuted() {
+        agentFound();
+        when(policyService.evaluatePermission(agent, ActionType.SEND_EMAIL)).thenReturn(PermissionDecision.ALLOW);
+        saveReturnsWithId();
+        when(actionExecutor.execute(any(ActionRequest.class)))
+                .thenReturn(ExecutionRecord.builder().result("Email sent").build());
+
+        ActionRequestResponse response = actionRequestService.processActionRequest(RAW_KEY, request);
+
+        assertEquals(PermissionDecision.ALLOW, response.getDecision());
+        assertEquals("Email sent", response.getExecutionResult());
+        verify(actionExecutor).execute(any(ActionRequest.class));
+        verify(auditService).recordEvent(eq(agent.getId()), eq(agent.getId()), eq(response.getId()),
+                eq(AuditEventType.ACTION_EXECUTED), eq("ALLOWED_AND_EXECUTED"), anyMap());
+    }
 }
