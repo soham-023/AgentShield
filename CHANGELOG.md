@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Example `.env.example` file for required and optional local configuration.
+- Container health checks for Docker deployments.
+- Approval expiry configuration via `AGENTSHIELD_APPROVAL_EXPIRATION_HOURS`.
 - README with overview, setup instructions and API documentation.
 - GitHub Actions CI workflow running `mvn verify` on Java 21.
 - Unit tests for `PolicyService` (create/update, delete, default-deny evaluation).

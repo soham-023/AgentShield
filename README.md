@@ -29,7 +29,8 @@ Supported action types: `READ_EMAIL`, `SEND_EMAIL`, `READ_FILE`, `DELETE_FILE`, 
 Prerequisites: Java 21, Maven, Docker.
 
 ```bash
-# 1. Set the required secrets (no defaults are shipped)
+# 1. Copy the environment template and set the required secrets
+cp .env.example .env
 export AGENTSHIELD_DB_PASSWORD='choose-a-db-password'
 export AGENTSHIELD_JWT_SECRET="$(openssl rand -base64 48)"
 
