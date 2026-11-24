@@ -9,8 +9,6 @@
 spring:
   application:
     name: AgentShield
-  jpa:
-    open-in-view: false
 
   # ---- Database (PostgreSQL) ----
   # The password has no default: set AGENTSHIELD_DB_PASSWORD or startup fails.
@@ -22,6 +20,7 @@ spring:
 
   # ---- JPA / Hibernate ----
   jpa:
+    open-in-view: false
     hibernate:
       # "update" auto-creates/updates tables based on entities.
       # In production, use "validate" + Flyway/Liquibase migrations.
