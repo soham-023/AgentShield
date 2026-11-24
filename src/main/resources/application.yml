@@ -54,7 +54,7 @@ agentshield:
     secret: ${AGENTSHIELD_JWT_SECRET:}
     expiration-ms: ${AGENTSHIELD_JWT_EXPIRATION_MS:86400000}  # 24 hours
   approval:
-    expiration-hours: 24     # Pending approvals expire after 24 hours
+    expiration-hours: ${AGENTSHIELD_APPROVAL_EXPIRATION_HOURS:24}
   seed:
     # Seeds demo@agentshield.com and admin@agentshield.com on startup.
     # Set AGENTSHIELD_SEED_DEMO_USERS=false outside local development.

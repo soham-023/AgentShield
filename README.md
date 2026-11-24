@@ -49,6 +49,7 @@ mvn spring-boot:run
 | `AGENTSHIELD_DB_URL` | no | `jdbc:postgresql://localhost:5432/agentshield` | |
 | `AGENTSHIELD_DB_USERNAME` | no | `agentshield` | |
 | `AGENTSHIELD_JWT_EXPIRATION_MS` | no | `86400000` (24 h) | |
+| `AGENTSHIELD_APPROVAL_EXPIRATION_HOURS` | no | `24` | Hours before a pending approval expires |
 | `PORT` | no | `8080` | |
 
 The app runs on `http://localhost:8080`.
