@@ -25,7 +25,7 @@ spring:
       # "update" auto-creates/updates tables based on entities.
       # In production, use "validate" + Flyway/Liquibase migrations.
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -47,7 +47,7 @@ server:
 # ---- Logging ----
 logging:
   level:
-    com.agentshield: DEBUG
+    com.agentshield: INFO
     org.springframework.security: INFO
 
 # ---- AgentShield settings ----
