@@ -92,7 +92,7 @@ class ApprovalServiceTest {
     @DisplayName("Owner approval executes the action and records an APPROVED decision")
     void ownerCanApprove() {
         when(securityUtils.getCurrentUser()).thenReturn(owner);
-        when(actionRequestRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
+        when(actionRequestRepository.findByIdForUpdate(requestId)).thenReturn(Optional.of(pendingRequest));
         when(approvalRepository.existsByActionRequestId(requestId)).thenReturn(false);
         when(actionExecutor.execute(pendingRequest)).thenReturn(ExecutionRecord.builder()
                 .executionStatus(ExecutionStatus.SUCCESS).result("SIMULATED: sent").build());
@@ -126,7 +126,7 @@ class ApprovalServiceTest {
     @DisplayName("Rejection marks the request REJECTED and never executes it")
     void ownerCanReject() {
         when(securityUtils.getCurrentUser()).thenReturn(owner);
-        when(actionRequestRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
+        when(actionRequestRepository.findByIdForUpdate(requestId)).thenReturn(Optional.of(pendingRequest));
         when(approvalRepository.existsByActionRequestId(requestId)).thenReturn(false);
 
         ActionRequestResponse response = approvalService.reject(requestId, null);
@@ -141,7 +141,7 @@ class ApprovalServiceTest {
     @DisplayName("A user who does not own the agent cannot approve")
     void nonOwnerCannotApprove() {
         when(securityUtils.getCurrentUser()).thenReturn(otherUser);
-        when(actionRequestRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
+        when(actionRequestRepository.findByIdForUpdate(requestId)).thenReturn(Optional.of(pendingRequest));
 
         assertThrows(AccessDeniedException.class, () -> approvalService.approve(requestId, null));
         verify(actionExecutor, never()).execute(any());
@@ -152,7 +152,7 @@ class ApprovalServiceTest {
     void nonPendingRequestRejected() {
         pendingRequest.setStatus(RequestStatus.ALLOWED);
         when(securityUtils.getCurrentUser()).thenReturn(owner);
-        when(actionRequestRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
+        when(actionRequestRepository.findByIdForUpdate(requestId)).thenReturn(Optional.of(pendingRequest));
 
         assertThrows(BadRequestException.class, () -> approvalService.approve(requestId, null));
     }
@@ -162,7 +162,7 @@ class ApprovalServiceTest {
     void expiredRequestIsMarkedExpired() {
         pendingRequest.setExpiresAt(LocalDateTime.now().minusMinutes(5));
         when(securityUtils.getCurrentUser()).thenReturn(owner);
-        when(actionRequestRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
+        when(actionRequestRepository.findByIdForUpdate(requestId)).thenReturn(Optional.of(pendingRequest));
 
         assertThrows(BadRequestException.class, () -> approvalService.approve(requestId, null));
         assertEquals(RequestStatus.EXPIRED, pendingRequest.getStatus());
@@ -174,7 +174,7 @@ class ApprovalServiceTest {
     @DisplayName("A request that was already decided cannot be decided again")
     void doubleDecisionRejected() {
         when(securityUtils.getCurrentUser()).thenReturn(owner);
-        when(actionRequestRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
+        when(actionRequestRepository.findByIdForUpdate(requestId)).thenReturn(Optional.of(pendingRequest));
         when(approvalRepository.existsByActionRequestId(requestId)).thenReturn(true);
 
         assertThrows(BadRequestException.class, () -> approvalService.reject(requestId, null));

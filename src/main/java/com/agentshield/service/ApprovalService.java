@@ -132,7 +132,7 @@ public class ApprovalService {
     private ActionRequest getAndValidatePendingRequest(UUID requestId) {
         User currentUser = securityUtils.getCurrentUser();
 
-        ActionRequest request = actionRequestRepository.findById(requestId)
+        ActionRequest request = actionRequestRepository.findByIdForUpdate(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("ActionRequest", "id", requestId));
 
         // Ownership rule: only agent owner or ADMIN can approve
