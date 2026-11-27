@@ -12,6 +12,7 @@ import com.agentshield.enums.AuditEventType;
 import com.agentshield.enums.RequestStatus;
 import com.agentshield.enums.UserRole;
 import com.agentshield.exception.AccessDeniedException;
+import com.agentshield.exception.ApprovalExpiredException;
 import com.agentshield.exception.BadRequestException;
 import com.agentshield.exception.ResourceNotFoundException;
 import com.agentshield.executor.SimulatedActionExecutor;
@@ -61,7 +62,7 @@ public class ApprovalService {
     /**
      * Approves a pending action request and executes the simulated action.
      */
-    @Transactional
+    @Transactional(noRollbackFor = ApprovalExpiredException.class)
     public ActionRequestResponse approve(UUID requestId, ApprovalDecisionRequest decisionRequest) {
         ActionRequest request = getAndValidatePendingRequest(requestId);
         User approver = securityUtils.getCurrentUser();
@@ -97,7 +98,7 @@ public class ApprovalService {
     /**
      * Rejects a pending action request.
      */
-    @Transactional
+    @Transactional(noRollbackFor = ApprovalExpiredException.class)
     public ActionRequestResponse reject(UUID requestId, ApprovalDecisionRequest decisionRequest) {
         ActionRequest request = getAndValidatePendingRequest(requestId);
         User approver = securityUtils.getCurrentUser();
@@ -150,7 +151,7 @@ public class ApprovalService {
         if (request.getExpiresAt() != null && LocalDateTime.now().isAfter(request.getExpiresAt())) {
             request.setStatus(RequestStatus.EXPIRED);
             actionRequestRepository.save(request);
-            throw new BadRequestException("Action request has expired and can no longer be approved");
+            throw new ApprovalExpiredException("Action request has expired and can no longer be approved");
         }
 
         // Guard against double approval

@@ -3,9 +3,11 @@ package com.agentshield.controller;
 import com.agentshield.dto.request.CreateAgentRequest;
 import com.agentshield.dto.request.CreatePolicyRequest;
 import com.agentshield.dto.request.SubmitActionRequest;
+import com.agentshield.entity.ActionRequest;
 import com.agentshield.enums.ActionType;
 import com.agentshield.enums.PermissionDecision;
 import com.agentshield.enums.RequestStatus;
+import com.agentshield.repository.ActionRequestRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +20,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -35,6 +39,9 @@ class FullWorkflowIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ActionRequestRepository actionRequestRepository;
 
     @Test
     @DisplayName("End-to-End Workflow: Agent Registration -> Policies -> Allow / Deny / Require Approval -> Human Decision -> Audit")
@@ -168,6 +175,31 @@ class FullWorkflowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status", is("EXECUTED")))
                 .andExpect(jsonPath("$.executionResult", containsString("SIMULATED")));
+
+        SubmitActionRequest expiringAction = SubmitActionRequest.builder()
+                .actionType(ActionType.SEND_EMAIL)
+                .description("Expired action")
+                .parameters(Map.of())
+                .build();
+        MvcResult expiringResult = mockMvc.perform(post("/api/v1/agent-actions")
+                        .header("X-Agent-API-Key", apiKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(expiringAction)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String expiringRequestId = (String) objectMapper
+                .readValue(expiringResult.getResponse().getContentAsString(), Map.class).get("id");
+        ActionRequest expiringRequest = actionRequestRepository.findById(UUID.fromString(expiringRequestId))
+                .orElseThrow();
+        expiringRequest.setExpiresAt(LocalDateTime.now().minusMinutes(1));
+        actionRequestRepository.save(expiringRequest);
+
+        mockMvc.perform(post("/api/v1/approvals/{requestId}/approve", expiringRequestId))
+                .andExpect(status().isBadRequest());
+        org.junit.jupiter.api.Assertions.assertEquals(
+                RequestStatus.EXPIRED,
+                actionRequestRepository.findById(UUID.fromString(expiringRequestId)).orElseThrow().getStatus()
+        );
 
         // ===============================================================
         // 9. VERIFY AUDIT LOGS
