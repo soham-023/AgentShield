@@ -31,8 +31,7 @@ import java.util.UUID;
     name = "action_requests",
     indexes = {
         @Index(name = "idx_action_request_agent", columnList = "agent_id"),
-        @Index(name = "idx_action_request_status", columnList = "status"),
-        @Index(name = "idx_action_request_idempotency", columnList = "agent_id, idempotency_key", unique = true)
+        @Index(name = "idx_action_request_status", columnList = "status")
     },
     uniqueConstraints = @UniqueConstraint(
         name = "uk_action_request_agent_idempotency",

@@ -60,6 +60,9 @@ The app runs on `http://localhost:8080`.
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - Health check: `GET /health`
 
+PostgreSQL schema updates are versioned with Flyway. Existing installations are
+baselined at version 0 so new migrations can be applied without recreating data.
+
 Demo users are disabled by default. For local development, set `AGENTSHIELD_SEED_DEMO_USERS=true` to create `demo@agentshield.com` and `admin@agentshield.com`; override their passwords with `AGENTSHIELD_DEMO_USER_PASSWORD` / `AGENTSHIELD_DEMO_ADMIN_PASSWORD`. Do not enable demo-user seeding in shared or production environments.
 
 ## Authentication
