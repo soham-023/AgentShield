@@ -58,8 +58,8 @@ agentshield:
     expiration-hours: ${AGENTSHIELD_APPROVAL_EXPIRATION_HOURS:24}
   seed:
     # Seeds demo@agentshield.com and admin@agentshield.com on startup.
-    # Set AGENTSHIELD_SEED_DEMO_USERS=false outside local development.
-    demo-users: ${AGENTSHIELD_SEED_DEMO_USERS:true}
+    # Opt in explicitly for local development; never seed accounts by default.
+    demo-users: ${AGENTSHIELD_SEED_DEMO_USERS:false}
     demo-user-password: ${AGENTSHIELD_DEMO_USER_PASSWORD:Password123!}
     demo-admin-password: ${AGENTSHIELD_DEMO_ADMIN_PASSWORD:AdminPass123!}
 

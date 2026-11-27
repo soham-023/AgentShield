@@ -16,12 +16,12 @@ import org.springframework.stereotype.Component;
  * so a fresh local instance can be used straight away.
  *
  * <p>Seeding is controlled by {@code agentshield.seed.demo-users} (env
- * {@code AGENTSHIELD_SEED_DEMO_USERS}); set it to {@code false} in any shared or
- * production environment. The demo passwords can be overridden with
+ * {@code AGENTSHIELD_SEED_DEMO_USERS}) and is disabled unless explicitly enabled.
+ * The demo passwords can be overridden with
  * {@code AGENTSHIELD_DEMO_USER_PASSWORD} and {@code AGENTSHIELD_DEMO_ADMIN_PASSWORD}.
  */
 @Component
-@ConditionalOnProperty(prefix = "agentshield.seed", name = "demo-users", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "agentshield.seed", name = "demo-users", havingValue = "true")
 @RequiredArgsConstructor
 @Slf4j
 public class DataInitializer implements CommandLineRunner {

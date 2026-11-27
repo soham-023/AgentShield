@@ -33,6 +33,7 @@ Prerequisites: Java 21, Maven, Docker.
 cp .env.example .env
 export AGENTSHIELD_DB_PASSWORD='choose-a-db-password'
 export AGENTSHIELD_JWT_SECRET="$(openssl rand -base64 48)"
+export AGENTSHIELD_SEED_DEMO_USERS=true
 
 # 2. Start PostgreSQL
 docker compose up -d
@@ -59,7 +60,7 @@ The app runs on `http://localhost:8080`.
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - Health check: `GET /health`
 
-Demo users are seeded on startup (`demo@agentshield.com`, `admin@agentshield.com`). Disable this with `AGENTSHIELD_SEED_DEMO_USERS=false`, or override their passwords with `AGENTSHIELD_DEMO_USER_PASSWORD` / `AGENTSHIELD_DEMO_ADMIN_PASSWORD`.
+Demo users are disabled by default. For local development, set `AGENTSHIELD_SEED_DEMO_USERS=true` to create `demo@agentshield.com` and `admin@agentshield.com`; override their passwords with `AGENTSHIELD_DEMO_USER_PASSWORD` / `AGENTSHIELD_DEMO_ADMIN_PASSWORD`. Do not enable demo-user seeding in shared or production environments.
 
 ## Authentication
 
