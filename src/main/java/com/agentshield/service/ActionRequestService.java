@@ -182,6 +182,12 @@ public class ActionRequestService {
     public ActionRequestResponse getRequestById(UUID id) {
         ActionRequest req = actionRequestRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ActionRequest", "id", id));
+        User currentUser = securityUtils.getCurrentUser();
+        boolean isOwner = req.getAgent().getOwner().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
+        if (!isOwner && !isAdmin) {
+            throw new AccessDeniedException("You are not authorized to view this action request");
+        }
         return toResponse(req);
     }
 

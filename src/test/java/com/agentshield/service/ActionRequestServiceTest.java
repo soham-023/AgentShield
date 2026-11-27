@@ -263,6 +263,27 @@ class ActionRequestServiceTest {
     }
 
     @Test
+    @DisplayName("A user cannot view another owner's action request")
+    void nonOwnerCannotViewRequest() {
+        User owner = User.builder().id(UUID.randomUUID()).role(UserRole.USER).build();
+        User otherUser = User.builder().id(UUID.randomUUID()).role(UserRole.USER).build();
+        agent.setOwner(owner);
+        ActionRequest privateRequest = ActionRequest.builder()
+                .id(UUID.randomUUID())
+                .agent(agent)
+                .actionType(ActionType.SEND_EMAIL)
+                .status(RequestStatus.PENDING_APPROVAL)
+                .idempotencyKey("private-key")
+                .build();
+        when(actionRequestRepository.findById(privateRequest.getId())).thenReturn(Optional.of(privateRequest));
+        when(securityUtils.getCurrentUser()).thenReturn(otherUser);
+
+        assertThrows(AccessDeniedException.class,
+                () -> actionRequestService.getRequestById(privateRequest.getId()));
+        verifyNoInteractions(executionRecordRepository);
+    }
+
+    @Test
     @DisplayName("Listing requests attaches each request's execution result")
     void listingIncludesExecutionResults() {
         ActionRequest executed = ActionRequest.builder().id(UUID.randomUUID()).agent(agent)
