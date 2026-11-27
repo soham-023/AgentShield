@@ -1,6 +1,7 @@
 package com.agentshield.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -188,6 +189,13 @@ public class GlobalExceptionHandler {
             MissingServletRequestParameterException ex, HttpServletRequest request) {
 
         return badRequest("Missing required parameter '" + ex.getParameterName() + "'", request);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+            ConstraintViolationException ex, HttpServletRequest request) {
+
+        return badRequest("One or more request parameters are outside the allowed range", request);
     }
 
     private ResponseEntity<ErrorResponse> badRequest(String message, HttpServletRequest request) {

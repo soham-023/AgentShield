@@ -6,10 +6,13 @@ import com.agentshield.security.ApiHeaders;
 import com.agentshield.service.ActionRequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -21,6 +24,7 @@ import java.util.UUID;
  * {@code X-Agent-API-Key} header; the read endpoints need a signed-in user.
  */
 @RestController
+@Validated
 @RequestMapping("/api/v1/agent-actions")
 @RequiredArgsConstructor
 @Tag(name = "Action Requests", description = "Endpoints for AI agents to submit action requests")
@@ -40,8 +44,8 @@ public class ActionRequestController {
     @GetMapping
     @Operation(summary = "List action requests", description = "View a page of action requests owned by the signed-in user")
     public ResponseEntity<Page<ActionRequestResponse>> getAllRequests(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "50") @Min(1) @Max(100) int size) {
         return ResponseEntity.ok(actionRequestService.getAllRequests(page, size));
     }
 

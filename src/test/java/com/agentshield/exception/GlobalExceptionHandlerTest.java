@@ -95,4 +95,12 @@ class GlobalExceptionHandlerTest {
         assertError(handler.handleMissingParameter(ex, request), HttpStatus.BAD_REQUEST,
                 "Bad Request", "Missing required parameter 'status'");
     }
+
+    @Test
+    @DisplayName("out-of-range pagination parameters map to 400")
+    void constraintViolation() {
+        var ex = new jakarta.validation.ConstraintViolationException("page must be non-negative", java.util.Set.of());
+        assertError(handler.handleConstraintViolation(ex, request), HttpStatus.BAD_REQUEST,
+                "Bad Request", "One or more request parameters are outside the allowed range");
+    }
 }
