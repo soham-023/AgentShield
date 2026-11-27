@@ -48,9 +48,7 @@ public class ApprovalService {
 
         List<ActionRequest> pendingList;
         if (currentUser.getRole() == UserRole.ADMIN) {
-            pendingList = actionRequestRepository.findAll().stream()
-                    .filter(ar -> ar.getStatus() == RequestStatus.PENDING_APPROVAL)
-                    .toList();
+            pendingList = actionRequestRepository.findByStatus(RequestStatus.PENDING_APPROVAL);
         } else {
             pendingList = actionRequestRepository.findByAgentOwnerIdAndStatus(currentUser.getId(), RequestStatus.PENDING_APPROVAL);
         }

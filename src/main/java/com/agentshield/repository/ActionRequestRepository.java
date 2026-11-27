@@ -23,6 +23,8 @@ public interface ActionRequestRepository extends JpaRepository<ActionRequest, UU
      */
     Optional<ActionRequest> findByAgent_IdAndIdempotencyKey(UUID agentId, String idempotencyKey);
 
+    List<ActionRequest> findByStatus(RequestStatus status);
+
     /**
      * Find all requests for a specific agent.
      */

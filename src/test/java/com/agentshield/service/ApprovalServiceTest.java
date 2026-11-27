@@ -33,6 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -105,6 +106,20 @@ class ApprovalServiceTest {
         assertEquals("Looks good", captor.getValue().getComments());
         verify(auditService).recordEvent(eq(owner.getId()), any(), eq(requestId),
                 eq(AuditEventType.ACTION_APPROVED), anyString(), anyMap());
+    }
+
+    @Test
+    @DisplayName("Admin pending approvals are filtered by status in the repository")
+    void adminPendingApprovalsUseStatusQuery() {
+        User admin = User.builder().id(UUID.randomUUID()).role(UserRole.ADMIN).build();
+        when(securityUtils.getCurrentUser()).thenReturn(admin);
+        when(actionRequestRepository.findByStatus(RequestStatus.PENDING_APPROVAL))
+                .thenReturn(List.of(pendingRequest));
+
+        assertEquals(1, approvalService.getPendingApprovals().size());
+
+        verify(actionRequestRepository).findByStatus(RequestStatus.PENDING_APPROVAL);
+        verify(actionRequestRepository, never()).findAll();
     }
 
     @Test
