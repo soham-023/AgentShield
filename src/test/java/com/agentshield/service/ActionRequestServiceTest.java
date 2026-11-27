@@ -6,11 +6,13 @@ import com.agentshield.dto.response.ActionRequestResponse;
 import com.agentshield.entity.ActionRequest;
 import com.agentshield.entity.Agent;
 import com.agentshield.entity.ExecutionRecord;
+import com.agentshield.entity.User;
 import com.agentshield.enums.ActionType;
 import com.agentshield.enums.AgentStatus;
 import com.agentshield.enums.AuditEventType;
 import com.agentshield.enums.PermissionDecision;
 import com.agentshield.enums.RequestStatus;
+import com.agentshield.enums.UserRole;
 import com.agentshield.exception.AccessDeniedException;
 import com.agentshield.exception.BadRequestException;
 import com.agentshield.exception.ResourceNotFoundException;
@@ -18,7 +20,11 @@ import com.agentshield.executor.SimulatedActionExecutor;
 import com.agentshield.repository.ActionRequestRepository;
 import com.agentshield.repository.AgentRepository;
 import com.agentshield.repository.ExecutionRecordRepository;
+import com.agentshield.security.SecurityUtils;
 import com.agentshield.util.ApiKeyUtils;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -59,6 +65,9 @@ class ActionRequestServiceTest {
 
     @Mock
     private ExecutionRecordRepository executionRecordRepository;
+
+    @Mock
+    private SecurityUtils securityUtils;
 
     @InjectMocks
     private ActionRequestService actionRequestService;
@@ -260,15 +269,36 @@ class ActionRequestServiceTest {
                 .actionType(ActionType.READ_FILE).status(RequestStatus.EXECUTED).idempotencyKey("k1").build();
         ActionRequest rejected = ActionRequest.builder().id(UUID.randomUUID()).agent(agent)
                 .actionType(ActionType.DELETE_FILE).status(RequestStatus.REJECTED).idempotencyKey("k2").build();
-        when(actionRequestRepository.findAll()).thenReturn(List.of(executed, rejected));
+        User admin = User.builder().id(UUID.randomUUID()).role(UserRole.ADMIN).build();
+        when(securityUtils.getCurrentUser()).thenReturn(admin);
+        when(actionRequestRepository.findAll(any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(executed, rejected)));
         when(executionRecordRepository.findByActionRequestId(executed.getId()))
                 .thenReturn(Optional.of(ExecutionRecord.builder().result("File read").build()));
         when(executionRecordRepository.findByActionRequestId(rejected.getId())).thenReturn(Optional.empty());
 
-        List<ActionRequestResponse> responses = actionRequestService.getAllRequests();
+        List<ActionRequestResponse> responses = actionRequestService.getAllRequests(0, 50).getContent();
 
         assertEquals(2, responses.size());
         assertEquals("File read", responses.get(0).getExecutionResult());
         assertNull(responses.get(1).getExecutionResult());
+    }
+
+    @Test
+    @DisplayName("A regular user's action history is restricted to their agents")
+    void listingUsesOwnerScopedQuery() {
+        UUID ownerId = UUID.randomUUID();
+        User owner = User.builder().id(ownerId).role(UserRole.USER).build();
+        when(securityUtils.getCurrentUser()).thenReturn(owner);
+        when(actionRequestRepository.findByAgentOwnerId(eq(ownerId), any()))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        actionRequestService.getAllRequests(0, 25);
+
+        verify(actionRequestRepository).findByAgentOwnerId(eq(ownerId), argThat(pageable ->
+                pageable.getPageNumber() == 0
+                        && pageable.getPageSize() == 25
+                        && pageable.getSort().getOrderFor("createdAt").getDirection() == Sort.Direction.DESC));
+        verify(actionRequestRepository, never()).findAll(any(org.springframework.data.domain.Pageable.class));
     }
 }

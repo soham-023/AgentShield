@@ -11,14 +11,20 @@ import com.agentshield.exception.AccessDeniedException;
 import com.agentshield.exception.BadRequestException;
 import com.agentshield.exception.ResourceNotFoundException;
 import com.agentshield.executor.SimulatedActionExecutor;
+import com.agentshield.entity.User;
 import com.agentshield.repository.ActionRequestRepository;
 import com.agentshield.repository.AgentRepository;
 import com.agentshield.repository.ExecutionRecordRepository;
 import com.agentshield.security.ApiHeaders;
+import com.agentshield.security.SecurityUtils;
 import com.agentshield.util.ApiKeyUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +57,7 @@ public class ActionRequestService {
     private final SimulatedActionExecutor actionExecutor;
     private final AuditService auditService;
     private final ExecutionRecordRepository executionRecordRepository;
+    private final SecurityUtils securityUtils;
 
     /** How long a REQUIRE_APPROVAL request waits for a human before it expires. */
     @Value("${agentshield.approval.expiration-hours:24}")
@@ -155,12 +162,15 @@ public class ActionRequestService {
         return ActionRequestResponse.fromEntity(actionRequest, executionResult);
     }
 
-    /** Returns every action request, each with its execution result if it ran. */
+    /** Returns a page of action requests visible to the signed-in user. */
     @Transactional(readOnly = true)
-    public List<ActionRequestResponse> getAllRequests() {
-        return actionRequestRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
+    public Page<ActionRequestResponse> getAllRequests(int page, int size) {
+        User currentUser = securityUtils.getCurrentUser();
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<ActionRequest> requests = currentUser.getRole() == UserRole.ADMIN
+                ? actionRequestRepository.findAll(pageable)
+                : actionRequestRepository.findByAgentOwnerId(currentUser.getId(), pageable);
+        return requests.map(this::toResponse);
     }
 
     /**

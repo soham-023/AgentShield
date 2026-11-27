@@ -8,10 +8,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -38,9 +38,11 @@ public class ActionRequestController {
     }
 
     @GetMapping
-    @Operation(summary = "List all action requests", description = "View history of all submitted action requests")
-    public ResponseEntity<List<ActionRequestResponse>> getAllRequests() {
-        return ResponseEntity.ok(actionRequestService.getAllRequests());
+    @Operation(summary = "List action requests", description = "View a page of action requests owned by the signed-in user")
+    public ResponseEntity<Page<ActionRequestResponse>> getAllRequests(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return ResponseEntity.ok(actionRequestService.getAllRequests(page, size));
     }
 
     @GetMapping("/{requestId}")
