@@ -201,7 +201,8 @@ class ActionRequestServiceTest {
         ActionRequest existing = ActionRequest.builder().id(UUID.randomUUID()).agent(agent)
                 .actionType(ActionType.SEND_EMAIL).status(RequestStatus.EXECUTED)
                 .decision(PermissionDecision.ALLOW).idempotencyKey("retry-1").build();
-        when(actionRequestRepository.findByIdempotencyKey("retry-1")).thenReturn(Optional.of(existing));
+        when(actionRequestRepository.findByAgent_IdAndIdempotencyKey(agent.getId(), "retry-1"))
+                .thenReturn(Optional.of(existing));
         when(executionRecordRepository.findByActionRequestId(existing.getId()))
                 .thenReturn(Optional.of(ExecutionRecord.builder().result("Email sent").build()));
         request.setIdempotencyKey("  retry-1 ");
@@ -212,6 +213,23 @@ class ActionRequestServiceTest {
         assertEquals("Email sent", response.getExecutionResult());
         verify(actionRequestRepository, never()).save(any());
         verifyNoInteractions(policyService, actionExecutor, auditService);
+    }
+
+    @Test
+    @DisplayName("An idempotency key used by another agent does not reuse its request")
+    void idempotencyKeyIsScopedToAgent() {
+        agentFound();
+        request.setIdempotencyKey("shared-key");
+        when(actionRequestRepository.findByAgent_IdAndIdempotencyKey(agent.getId(), "shared-key"))
+                .thenReturn(Optional.empty());
+        when(policyService.evaluatePermission(agent, ActionType.SEND_EMAIL)).thenReturn(PermissionDecision.DENY);
+        saveReturnsWithId();
+
+        ActionRequestResponse response = actionRequestService.processActionRequest(RAW_KEY, request);
+
+        assertEquals(RequestStatus.REJECTED, response.getStatus());
+        verify(actionRequestRepository).findByAgent_IdAndIdempotencyKey(agent.getId(), "shared-key");
+        verify(actionRequestRepository).save(any(ActionRequest.class));
     }
 
     @Test

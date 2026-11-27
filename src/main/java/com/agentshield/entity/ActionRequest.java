@@ -32,8 +32,12 @@ import java.util.UUID;
     indexes = {
         @Index(name = "idx_action_request_agent", columnList = "agent_id"),
         @Index(name = "idx_action_request_status", columnList = "status"),
-        @Index(name = "idx_action_request_idempotency", columnList = "idempotency_key", unique = true)
-    }
+        @Index(name = "idx_action_request_idempotency", columnList = "agent_id, idempotency_key", unique = true)
+    },
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_action_request_agent_idempotency",
+        columnNames = {"agent_id", "idempotency_key"}
+    )
 )
 @Getter
 @Setter
@@ -86,7 +90,7 @@ public class ActionRequest {
      * Client-provided idempotency key to prevent duplicate requests.
      * Must be unique across all requests.
      */
-    @Column(name = "idempotency_key", nullable = false, unique = true)
+    @Column(name = "idempotency_key", nullable = false)
     private String idempotencyKey;
 
     @CreationTimestamp

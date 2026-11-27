@@ -83,7 +83,8 @@ public class ActionRequestService {
                 ? request.getIdempotencyKey().trim()
                 : UUID.randomUUID().toString();
 
-        Optional<ActionRequest> existing = actionRequestRepository.findByIdempotencyKey(idempotencyKey);
+        Optional<ActionRequest> existing = actionRequestRepository
+                .findByAgent_IdAndIdempotencyKey(agent.getId(), idempotencyKey);
         if (existing.isPresent()) {
             log.info("Idempotent request detected. Returning existing record: {}", existing.get().getId());
             return toResponse(existing.get());

@@ -21,7 +21,7 @@ public interface ActionRequestRepository extends JpaRepository<ActionRequest, UU
      * Find an existing request by its idempotency key.
      * Used to prevent duplicate action requests.
      */
-    Optional<ActionRequest> findByIdempotencyKey(String idempotencyKey);
+    Optional<ActionRequest> findByAgent_IdAndIdempotencyKey(UUID agentId, String idempotencyKey);
 
     /**
      * Find all requests for a specific agent.
